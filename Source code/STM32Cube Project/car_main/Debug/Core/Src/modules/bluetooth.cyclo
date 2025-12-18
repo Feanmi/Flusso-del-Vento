@@ -1,0 +1,4 @@
+../Core/Src/modules/bluetooth.c:3:6:init_bluetooth	1
+../Core/Src/modules/bluetooth.c:7:9:try_connect_bt	1
+../Core/Src/modules/bluetooth.c:11:6:handle_input_bt	1
+../Core/Src/modules/bluetooth.c:15:6:send_data_bt	1

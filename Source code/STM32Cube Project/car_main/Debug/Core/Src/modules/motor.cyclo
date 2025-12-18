@@ -1,0 +1,2 @@
+../Core/Src/modules/motor.c:12:6:init_motor	1
+../Core/Src/modules/motor.c:16:6:perform_motor_control_step	9

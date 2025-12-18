@@ -1,0 +1,2 @@
+../Core/Src/modules/acellerometer.c:3:6:init_gyroscope	1
+../Core/Src/modules/acellerometer.c:8:6:read_accelleration	1

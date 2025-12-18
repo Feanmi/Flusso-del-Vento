@@ -1,0 +1,2 @@
+../Core/Src/modules/battery_sensor.c:3:6:init_batt_sense	1
+../Core/Src/modules/battery_sensor.c:7:6:read_batt_sense	1

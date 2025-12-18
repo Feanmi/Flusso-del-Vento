@@ -1,0 +1,2 @@
+../Core/Src/modules/servo.c:3:6:init_servo	1
+../Core/Src/modules/servo.c:7:6:perform_servo_control_step	1

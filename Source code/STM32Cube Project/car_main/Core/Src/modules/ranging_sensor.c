@@ -1,0 +1,92 @@
+#include <modules/ranging_sensor.h>
+
+// Global var
+extern uint16_t DISTANCE_MEASURED;
+extern uint8_t DATA_VALID_FLAGS;
+
+// Custom
+static int medianFilter10(int arr[]);
+
+// for ranging sensor
+static uint32_t refSpadCount;
+static uint8_t isApertureSpads;
+static uint8_t VhvSettings;
+static uint8_t PhaseCal;
+static VL53L0X_RangingMeasurementData_t RangingData;
+static VL53L0X_Dev_t  vl53l0x_c; // center module
+static VL53L0X_DEV    Dev = &vl53l0x_c;
+
+//temporary global structure
+// telemetry_temp_t structure;
+
+void init_ranging_sensor()
+{
+	  Dev->I2cHandle = &hi2c1;
+	  Dev->I2cDevAddr = 0x52;
+
+	  HAL_GPIO_WritePin(TOF_XSHUT_GPIO_Port, TOF_XSHUT_Pin, GPIO_PIN_RESET); // Disable XSHUT
+	  HAL_Delay(20);
+	  HAL_GPIO_WritePin(TOF_XSHUT_GPIO_Port, TOF_XSHUT_Pin, GPIO_PIN_SET); // Enable XSHUT
+	  HAL_Delay(20);
+
+	   //
+	   // VL53L0X init for Single Measurement
+	   //
+
+	   VL53L0X_WaitDeviceBooted( Dev );
+	   VL53L0X_DataInit( Dev );
+	   VL53L0X_StaticInit( Dev );
+	   VL53L0X_PerformRefCalibration(Dev, &VhvSettings, &PhaseCal);
+	   VL53L0X_PerformRefSpadManagement(Dev, &refSpadCount, &isApertureSpads);
+	   VL53L0X_SetDeviceMode(Dev, VL53L0X_DEVICEMODE_SINGLE_RANGING);
+
+
+	   // Enable/Disable Sigma and Signal check
+	   VL53L0X_SetLimitCheckEnable(Dev, VL53L0X_CHECKENABLE_SIGMA_FINAL_RANGE, 1);
+	   VL53L0X_SetLimitCheckEnable(Dev, VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE, 1);
+	   VL53L0X_SetLimitCheckValue(Dev, VL53L0X_CHECKENABLE_SIGNAL_RATE_FINAL_RANGE, (FixPoint1616_t)(0.1*65536));
+	   VL53L0X_SetLimitCheckValue(Dev, VL53L0X_CHECKENABLE_SIGMA_FINAL_RANGE, (FixPoint1616_t)(60*65536));
+	   VL53L0X_SetMeasurementTimingBudgetMicroSeconds(Dev, 33000); // 66000
+	   VL53L0X_SetVcselPulsePeriod(Dev, VL53L0X_VCSEL_PERIOD_PRE_RANGE, 18);
+	   VL53L0X_SetVcselPulsePeriod(Dev, VL53L0X_VCSEL_PERIOD_FINAL_RANGE, 14);
+}
+
+int medianFilter10(int arr[]) {
+    int temp[10];
+
+    // Копируем и сортируем
+    for(int i = 0; i < 10; i++) temp[i] = arr[i];
+
+    // Простая сортировка пузырьком
+    for(int i = 0; i < 9; i++) {
+        for(int j = i+1; j < 10; j++) {
+            if(temp[i] > temp[j]) {
+                int tmp = temp[i];
+                temp[i] = temp[j];
+                temp[j] = tmp;
+            }
+        }
+    }
+
+    return temp[5]; // медиана
+}
+
+void read_distance()
+{
+	  int buffer[10] = {0};
+	  for (int j = 0; j < 10; j++)
+	  {
+		  VL53L0X_PerformSingleRangingMeasurement(Dev, &RangingData);
+
+		  if(RangingData.RangeStatus == 0)
+		  {
+			  buffer[j] = RangingData.RangeMilliMeter;
+		  }
+		  else
+		  {
+			  //error handling
+		  }
+	  }
+	  DISTANCE_MEASURED = medianFilter10(buffer);
+	  set_flag_bit(&DATA_VALID_FLAGS, 1, 1);
+}
