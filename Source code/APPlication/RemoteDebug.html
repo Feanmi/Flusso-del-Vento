@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Remote Debug</title>
+  <style>
+    body {
+      font-family: system-ui;
+    }
+
+    .grid-container {
+      display: grid;
+      /* Creates 3 columns, each taking up an equal fraction of the available space */
+      grid-template-columns: repeat(3, 1fr);
+      /* Creates 3 rows, each taking up an equal fraction of the available space */
+      grid-template-rows: repeat(3, 1fr);
+      /* Sets the overall size of the grid container */
+      width: 20%;
+      height: 20%;
+      /* Adds spacing (gap) between the buttons */
+      gap: 10px;
+      border: 2px solid #ccc;
+      padding: 10px;
+    }
+
+    .slider {
+      width: 20%;
+    }
+
+    @media (pointer: coarse) {
+      .grid-container {
+        width: 100%;
+        height: 100%;
+      }
+
+      .slider {
+        width: 100%;
+      }
+    }
+
+    .grid-button {
+      /* Ensures the button fills its assigned grid cell */
+      width: 100%;
+      height: 100%;
+      /* Key to making them perfectly square within the responsive grid cells */
+      aspect-ratio: 1 / 1;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 1.5em;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .grid-button:hover {
+      background-color: #0056b3;
+    }
+
+    .bar {
+      width: 100%;
+      background-color: #ddd;
+    }
+
+    .progress {
+      width: 50%;
+      height: 17px;
+      background-color: #04AA6D;
+    }
+
+    .dc_progress {
+      width: 0%;
+      height: 17px;
+      background-color: blueviolet;
+    }
+
+    .tdd {
+      white-space: pre;
+    }
+  </style>
+</head>
+
+<body>
+  <h3>Command packet input</h3>
+
+  <table class="slider">
+    <tbody>
+      <tr>
+        <td>
+          <input type="checkbox" id="speed_checkbox" checked onclick="update_displayed_packet()" />
+        </td>
+        <td>Speed</td>
+        <td>
+          <input type="number" id="speed_input" min="-127" max="127" value="0" onchange="handle_speed_input(true)"/>
+        </td>
+        <td style="width: 100%;">
+          <input type="range" id="speed_slider" min="-127" max="127" value="0" style="width: 100%;" onchange="handle_speed_input(false)"/>
+        </td>
+        
+      </tr>
+      <tr>
+        <td>
+          <input type="checkbox" id="angle_checkbox" checked onclick="update_displayed_packet()"/>
+        </td>
+        <td>Angle</td>
+        <td>
+          <input type="number" id="angle_input" min="-127" max="127" value="0" onchange="handle_angle_input(true)"/>
+        </td>
+        <td style="width: 100%;">
+          <input type="range" id="angle_slider" min="-127" max="127" value="0" style="width: 100%;" onchange="handle_angle_input(false)"/>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <input type="checkbox" id="telem_checkbox" checked onclick="update_displayed_packet()"/>
+        </td>
+        <td>Telem</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div>Command packet: <span id="command_packet" style="font-family: monospace; font-size: 16px;"></span></div>
+  <button onclick="send_debug_command()">Send command packet</button>
+
+  <br><br>
+
+  <div>Response packet: <span id="response_packet" style="font-family: monospace; font-size: 16px;"></span></div>
+
+  <hr>
+
+  <h3>Telemetry display</h3>
+  <table style="width: 100%" id="tel_display">
+    <tbody>
+      <tr>
+        <td>speed</td>
+        <td class="bar">
+          <div id="speed_pb" class="progress"></div>
+        </td>
+        <td class="tdd" id="speed">NULL</td>
+      </tr>
+      <tr>
+        <td>pitch</td>
+        <td class="bar">
+          <div id="pitch_pb" class="progress"></div>
+        </td>
+        <td class="tdd" id="pitch">NULL</td>
+      </tr>
+      <tr>
+        <td>roll</td>
+        <td class="bar">
+          <div id="roll_pb" class="progress"></div>
+        </td>
+        <td class="tdd" id="roll">NULL</td>
+      </tr>
+      <tr>
+        <td>rpm_mag</td>
+        <td class="bar">
+          <div id="rpm_mag_pb" class="progress"></div>
+        </td>
+        <td class="tdd" id="rpm_mag">NULL</td>
+      </tr>
+      <tr>
+        <td>rpm_opt</td>
+        <td class="bar">
+          <div id="rpm_opt_pb" class="progress"></div>
+        </td>
+        <td class="tdd" id="rpm_opt">NULL</td>
+      </tr>
+      <tr>
+        <td>dist</td>
+        <td class="bar">
+          <div id="dist_pb" class="dc_progress"></div>
+        </td>
+        <td class="tdd" id="dist">NULL</td>
+      </tr>
+      <tr>
+        <td>bat_lvl</td>
+        <td class="bar">
+          <div id="bat_lvl_pb" class="dc_progress"></div>
+        </td>
+        <td class="tdd" id="bat_lvl">NULL</td>
+      </tr>
+    </tbody>
+  </table>
+
+
+  <script>
+    // Sliders and text fields
+    function send_debug_command() {
+      var [telem, speed, angle] = collect_debug_input()
+      var bytes = get_command_bytes(telem, speed, angle)
+      if (bytes == undefined) {
+        document.getElementById("command_packet").textContent = "Forbidden combination"
+        return
+      }
+      send_command(telem, speed, angle)
+    }
+
+    function handle_speed_input(is_number) {
+      var new_value
+      if (is_number) {
+        new_value = Number(document.getElementById("speed_input").value)
+        document.getElementById("speed_slider").value = new_value
+      }
+      else {
+        new_value = Number(document.getElementById("speed_slider").value)
+        document.getElementById("speed_input").value = new_value
+      }
+      update_displayed_packet()
+    }
+
+    function handle_angle_input(is_number) {
+      var new_value
+      if (is_number) {
+        new_value = Number(document.getElementById("angle_input").value)
+        document.getElementById("angle_slider").value = new_value
+      }
+      else {
+        new_value = Number(document.getElementById("angle_slider").value)
+        document.getElementById("angle_input").value = new_value
+      }
+      update_displayed_packet()
+    }
+
+    function collect_debug_input() {
+      var speed = document.getElementById("speed_checkbox").checked ? Number(document.getElementById("speed_input").value) : undefined
+      var angle = document.getElementById("angle_checkbox").checked ? Number(document.getElementById("angle_input").value) : undefined
+      var telem = Boolean(document.getElementById("telem_checkbox").checked)
+      return [telem, speed, angle]
+    }
+
+    function update_displayed_packet() {
+      var [telem, speed, angle] = collect_debug_input()
+      var bytes = get_command_bytes(telem, speed, angle)
+      if (bytes == undefined) {
+        document.getElementById("command_packet").textContent = "Forbidden combination"
+        return
+      }
+      var hex = uint8ArrayToHexMap(bytes)
+      document.getElementById("command_packet").textContent = hex
+    }
+
+    // Controller
+    let Joycon = { listeners: {}, controller: {}, controllers: { on: { press: (a, b) => { Joycon.listeners[a] = { callback: b, lastValue: 0 } }, move: (a, b) => { Joycon.listeners[a + "-move"] = { callback: b, lastValue: { x: 0, y: 0 } } }, connect: a => { Joycon.listeners["controller-connect"] = { callback: a } }, disconnect: a => { Joycon.listeners["controller-disconnect"] = { callback: a } } }, removeListener: a => { delete Joycon.listeners[a] }, vibrate: async (a, b) => { if (a.preset) { const b = Joycon.controllers.vibrationPresets, c = b[a.preset]; a = c } const c = { duration: b, strongMagnitude: a.strongMotorIntensity, weakMagnitude: a.mildMotorIntensity }, d = Object.values(Joycon.controller); d.forEach(a => { const b = a.vibrationActuator; b && b.playEffect("dual-rumble", c) }), await new Promise(a => { window.setTimeout(a, b) }) }, vibrationPresets: { mild: { strongMotorIntensity: 0, mildMotorIntensity: .07 }, medium: { strongMotorIntensity: 0, mildMotorIntensity: .14 }, strong: { strongMotorIntensity: 1, mildMotorIntensity: 1 } } }, update: () => { Joycon.updateControllers(); const a = Joycon.buttonMap, b = Joycon.axisMap, c = Object.values(Joycon.controller); c.forEach(c => { const d = c.buttons; d.forEach((b, c) => { const d = a[c], e = Joycon.listeners[d]; e && b.value !== e.lastValue && (e.lastValue = b.value, e.callback(b.value)) }); const e = c.axes; let f = {}; e.forEach((a, c) => { const d = b[c][0], e = b[c][1]; f[e] || (f[e] = {}), f[e][d] = a }), Object.keys(f).forEach(a => { const b = Joycon.listeners[a]; if (b) { const c = f[a]; (c.x !== b.lastValue.x || c.y !== b.lastValue.y) && (b.lastValue = c, b.callback({ x: c.x, y: c.y })) } }) }), 0 !== Object.keys(Joycon.controller).length && Joycon.onNextFrame(Joycon.update) }, updateControllers: () => { const a = navigator.getGamepads(); a.forEach(a => { a && a.index !== void 0 && (Joycon.controller[a.index] = a) }) }, addListeners: () => { window.addEventListener("gamepadconnected", a => { Joycon.controller[a.gamepad.index] = a.gamepad, Joycon.onNextFrame(Joycon.update); const b = Joycon.listeners["controller-connect"]; b && b.callback(a.gamepad) }), window.addEventListener("gamepaddisconnected", a => { delete Joycon.controller[a.gamepad.index]; const b = Joycon.listeners["controller-disconnect"]; b && b.callback(a.gamepad) }) }, onNextFrame: a => { window.requestAnimationFrame(a) }, buttonMap: { 0: "a", 1: "b", 2: "x", 3: "y", 4: "left-shoulder", 5: "right-shoulder", 6: "left-trigger", 7: "right-trigger", 8: "select", 9: "start", 10: "left-joystick", 11: "right-joystick", 12: "dpad-up", 13: "dpad-down", 14: "dpad-left", 15: "dpad-right", 16: "home", 17: "share" }, axisMap: { 0: ["x", "left-joystick-move"], 1: ["y", "left-joystick-move"], 2: ["x", "right-joystick-move"], 3: ["y", "right-joystick-move"] } }; Joycon.addListeners();
+
+    const controllers = Joycon.controllers;
+    const buttons = Object.values(Joycon.buttonMap);
+
+    var lx = 0
+    var ly = 0
+    var rx = 0
+    var ry = 0
+
+    var interval_cmd
+    var interval_tel
+
+    controllers.on.move('left-joystick', (value) => {
+      let lx_new = Math.round(value.x * 127)
+      let ly_new = -Math.round(value.y * 127)
+
+      if (Math.abs(lx_new) < 8)
+        lx_new = 0
+      if (Math.abs(ly_new) < 8)
+        ly_new = 0
+
+      if (Math.abs(lx_new - lx) > 1 || Math.abs(ly_new - ly) > 1) {
+        lx = lx_new
+        ly = ly_new
+        SPEED = ly
+      }
+    })
+
+    controllers.on.move('right-joystick', (value) => {
+      let rx_new = Math.round(value.x * 127)
+      let ry_new = -Math.round(value.y * 127)
+
+      if (Math.abs(rx_new) < 8)
+        rx_new = 0
+      if (Math.abs(ry_new) < 8)
+        ry_new = 0
+
+      if (Math.abs(rx_new - rx) > 1 || Math.abs(ry_new - ry) > 1) {
+        rx = rx_new
+        ry = ry_new
+        ANGLE = rx
+      }
+    });
+
+    controllers.on.connect((controller) => {
+      console.log('Controller connected!');
+      interval_cmd = setInterval(call_send_packet, CMD_PERIOD_MS)
+      interval_tel = setInterval(set_tel_flag, TEL_PERIOD_MS)
+    });
+
+    controllers.on.disconnect((controller) => {
+      console.log('Controller disconnected!');
+      if (Object.keys(Joycon.controller).length === 0) {
+        clearInterval(interval_cmd)
+        clearInterval(interval_tel)
+      }
+    });
+
+
+    // INTERAFACE
+    const ALLOWED_CMD = [0x01, 0x02, 0x03, 0x04, 0x07, 0xFF]
+    const MAX_SPEED = 10
+    const MAX_RPM = 100
+
+    const CMD_PERIOD_MS = 100
+    const TEL_PERIOD_MS = 1000
+    var TEL_FLAG = false
+    var SPEED = undefined
+    var ANGLE = undefined
+
+    var SQN_CNT = 0
+    var ADDR = 0x01
+    var CRC_PLACEHOLDER = 0xFC
+    var SQN_LOOKUP = {}
+    var ip = "192.168.5.1"
+    var port = "1001"
+    var ws_ip = `${ip}:${port}`
+    var TIMEOUT_MS = 100000
+
+    function set_tel_flag() {
+      TEL_FLAG = true
+    }
+
+    function call_send_packet() {
+      if (do_tel || SPEED === undefined || ANGLE === undefined)
+        send_command(do_tel, SPEED, ANGLE)
+      SPEED = undefined
+      ANGLE = undefined
+      TEL_FLAG = false
+    }
+
+    function uint8ArrayToHexMap(buffer) {
+      return Array.prototype.map.call(buffer, x =>
+        x.toString(16).padStart(2, '0')
+      ).join('');
+    }
+
+    function calculateCRC(data) {
+      const polynomial = 0x8c
+      let crc = 0x0
+
+      for (let i = 0; i < data.length; i++) {
+          crc ^= data[i]
+          for (let j = 0; j < 8; j++) {
+              if (crc & 0x01)
+                  crc = (crc >> 1) ^ polynomial
+              else
+                  crc >>= 1
+          }
+      }
+      return crc;
+    }
+    
+    function get_command_bytes(do_tel = false, speed = undefined, angle = undefined) {
+      var CMD = do_tel * 4 + (undefined != angle) * 2 + (undefined != speed)
+      if (!ALLOWED_CMD.includes(CMD))
+        return
+
+      var data = []
+      for (let i of [speed, angle])
+        if (i != undefined)
+          data.push(i)
+
+      var packet_body = [4 + data.length, SQN_CNT, ADDR, CMD, ...data]
+      var packet = new Uint8Array([0xAC, 0x53, ...packet_body, calculateCRC(packet_body)])
+      return packet
+    }
+
+    function send_command(do_tel = false, speed = undefined, angle = undefined) {
+      var CMD = do_tel * 4 + (undefined != angle) * 2 + (undefined != speed)
+      if (!ALLOWED_CMD.includes(CMD)) {
+        console.log("Forbidden command")
+        return
+      }
+      var bytes = get_command_bytes(do_tel, speed, angle)
+      if (bytes == undefined) 
+        return
+      var hex = uint8ArrayToHexMap(bytes)
+      console.log(hex)
+
+      fetch(`http://${ws_ip}/${hex}`, {
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+        method: "GET"
+      })
+        .catch((e) => {console.log("Error:", e); alert("Error: " + String(e))})
+        .then(handle_response)
+      SQN_LOOKUP[SQN_CNT++] = CMD
+      return
+    }
+
+    async function handle_response(html_response) {
+      if (html_response == undefined)
+        return
+      var content = await html_response.arrayBuffer()
+      console.log(content)
+      var raw_data = new Uint8Array(content)
+      document.getElementById("response_packet").textContent = uint8ArrayToHexMap(raw_data)
+
+      var view = new DataView(content)
+
+      var pre_AC = view.getUint8(0)
+      var pre_53 = view.getUint8(1)
+      var len = view.getUint8(2)
+      var sqn = view.getUint8(3)
+      var addr = view.getUint8(4)
+      var ack = view.getUint8(5)
+
+      var cmd = SQN_LOOKUP[sqn]
+      delete SQN_LOOKUP[sqn]
+      // console.log(SQN_LOOKUP)
+      // console.log(['pre_AC', 'pre_53', 'len', 'sqn', 'addr', 'ack', 'cmd'].join("\t"))
+      // console.log([pre_AC, pre_53, len, sqn, addr, ack, cmd].join("\t"))
+
+      if (cmd == 0x04 || cmd == 0x07) {
+        var tel_num = view.getUint8(6 + 0)
+        var speed = view.getInt16(6 + 1) / 2 ** 15 * MAX_SPEED
+        var pitch = view.getInt16(6 + 3) / 2 ** 15 * 90
+        var roll = view.getInt16(6 + 5) / 2 ** 15 * 90
+        var rpm_mag = view.getInt16(6 + 7) / 2 ** 15 * MAX_RPM
+        var rpm_opt = view.getInt16(6 + 9) / 2 ** 15 * MAX_RPM
+        var dist = view.getUint16(6 + 11) / 2 ** 16 * 2000 / 10
+        var bat_lvl = view.getUint8(6 + 13) / 2 ** 8 * 100
+        var valid = view.getUint8(6 + 14)
+        // console.log("Tel num:", tel_num)
+
+        var array = [speed, pitch, roll, rpm_mag, rpm_opt, dist, bat_lvl]
+        var vals_100max = [MAX_SPEED / 200, 90 / 200, 90 / 200, MAX_RPM / 200, MAX_RPM / 200, 2000 / 1000, 1]
+        var offsets = [50, 50, 50, 50, 50, 0, 0]
+        var bim = [7, 6, 5, 4, 3, 2, 1]
+        var element_ids = ['speed', 'pitch', 'roll', 'rpm_mag', 'rpm_opt', 'dist', 'bat_lvl']
+        for (let i = 0; i < array.length; i++) {
+          let bit_valid = valid >> bim[i] & 1
+          let text = bit_valid ? String(Math.round(array[i])).padStart(4, " ") : "INVALID"
+          let width = offsets[i] + (bit_valid ? array[i] / vals_100max[i] : 0)
+          document.getElementById(element_ids[i]).innerHTML = text
+          document.getElementById(element_ids[i] + "_pb").style.width = width + "%";
+        }
+      }
+
+      var crc = view.getUint8(len + 2)
+    }
+
+
+  update_displayed_packet()
+  </script>
+</body>
+
+</html>
