@@ -82,11 +82,4 @@ typedef enum{
 void perform_wifi_control_step();
 void init_wifi();
 
-// uint8_t try_connect_wifi();
-// void send_data_wifi(uint8_t* data, int data_len);
-// uint8_t try_connect();
-// void handle_input(uint8_t* data, int data_len);
-// uint8_t send_data();
-// uint8_t detect_disconnect();
-
 #endif /* INC_MODULES_WIFI_H_ */

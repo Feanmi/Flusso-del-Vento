@@ -1,6 +1,6 @@
 #include "modules/wifi.h"
 
-static void handle_input_wifi(uint8_t type);
+static void handle_input_wifi();
 static void receive_dma(uint16_t num_bytes);
 static void send_data_w_len(const uint8_t* data, uint16_t data_size);
 static int find(const char* str, int str_len, const char* sub, int sub_len, int start_idx, int end_idx);
@@ -46,7 +46,6 @@ extern uint8_t DATA_VALID_FLAGS;
 
 
 static char DMA_BUFFER[DMA_BUFFER_SIZE];
-static char INPUT_DATA_BUFFER[DMA_BUFFER_SIZE];
 static uint8_t INPUT_PACKET[DMA_BUFFER_SIZE];
 
 static char CURRENT_CONNECTION[5];
@@ -54,15 +53,11 @@ static char CURRENT_CONNECTION[5];
 static int flag_send_data = 0;
 static int flag_start_parse = 0;
 
-static int INPUT_DATA_REMAINDER = 0;
-
 static protocol_handler_t protocol_handler;
 
 static const char ipd [] = {'+', 'I', 'P', 'D'};
 static const char colon [] = {':'};
 static const char comma [] = {','};
-// static const char slash [] = {'/'};
-// static const char http_magic[] = {'\r', '\n', '\r', '\n'};
 static const char get_prefixK[] = {'G', 'E', 'T', ' ', '/'};
 
 static uint8_t telem [TELEM_SIZE];
@@ -121,7 +116,11 @@ void init_wifi(){
 
 	HAL_UART_Transmit(&huart2, (uint8_t*)"AT+RST\r\n", sizeof("AT+RST\r\n"), 100);
 	HAL_Delay(3000);
-
+    
+    // Disable echo
+    HAL_UART_Transmit(&huart2, (uint8_t*)"ATE0\r\n", sizeof("ATE0\r\n"), 100);
+    HAL_Delay(300);
+    
     // Configure WIFI module to work in access point(AP) mode
 	HAL_UART_Transmit(&huart2, (uint8_t*)"AT+CWMODE_CUR=2\r\n", sizeof("AT+CWMODE_CUR=2\r\n"), 100);
 	HAL_Delay(300);
@@ -149,9 +148,6 @@ void init_wifi(){
     receive_dma(DMA_BUFFER_SIZE);
 
     keep_alive_tick = HAL_GetTick();
-    
-//    HAL_Delay(100);
-//    HAL_UART_Transmit(&huart2, (uint8_t*)"ATE0\r\n", sizeof("ATE0\r\n"), 100);
 }
 
 // Send data to ESP
@@ -274,48 +270,14 @@ static int parse_uart_message(char* text, int max_length, uint8_t* output) {
     	*(output + i/2) = hex;
     }
 
-//    int msg_http_end = msg_http_start + msg_len;
-
-//    if (msg_http_end >= max_length) {
-//        int msg_data_start = rfind(text, max_length, http_magic, HTTP_MAGIC_LEN, msg_http_start, max_length - 1) + 4;
-////        memcpy(output, text + msg_data_start, max_length - msg_data_start);
-//        return msg_http_end - max_length;
-//    }
-
-//    int msg_data_start = rfind(text, max_length, http_magic, HTTP_MAGIC_LEN, msg_http_start, msg_http_end) + 4;
-//    memcpy(output, text + msg_data_start, msg_http_end - msg_data_start);
-
     return 0;
 }
 
 static void uart_it_receiver(){
-//    memset(INPUT_PACKET, 0, DMA_BUFFER_SIZE); // хуйня из-за того что вынесли INPUT_PACKET в глобальную перменную
-
-    // мб еще возвращать количество байт в записанных в data
     int rest = parse_uart_message(DMA_BUFFER, DMA_BUFFER_SIZE, INPUT_PACKET);
-    if (rest != -1){
-        if(rest == 0){
-            handle_input_wifi(1);
-        }
-        else {
-            memcpy(INPUT_DATA_BUFFER, INPUT_PACKET, DMA_BUFFER_SIZE);
-            INPUT_DATA_REMAINDER = rest;
-        }
+    if(rest == 0){
+        handle_input_wifi(1);
     }
-    // тут подумать еще
-    else if(INPUT_DATA_REMAINDER != 0){
-        int can_read_size = MIN(rest, DMA_BUFFER_SIZE - 1);
-        uint16_t current_len = DMA_BUFFER_SIZE - INPUT_DATA_REMAINDER;
-        memcpy(INPUT_DATA_BUFFER + current_len, DMA_BUFFER, can_read_size);
-        INPUT_DATA_REMAINDER -= can_read_size;
-        if(INPUT_DATA_REMAINDER < 0){
-            INPUT_DATA_REMAINDER = 0;
-            handle_input_wifi(2);
-        }
-    }
-//    else {
-//        memcpy(INPUT_DATA_BUFFER, DMA_BUFFER, DMA_BUFFER_SIZE - 13);
-//    }
 }
 
 // Prepare command to send data via UART to ESP
@@ -626,36 +588,11 @@ void perform_wifi_control_step(){
             i++;
         }
         protocol_process_command(&protocol_handler); 
-}
-}
-
-
-uint8_t try_connect_wifi(){
-	return 0;
+    }
 }
 
-void handle_input_wifi(uint8_t type){
+void handle_input_wifi(){
     CONNECTED = 1;
     keep_alive_tick = HAL_GetTick();
-    flag_send_data = type;
-}
-
-void send_data_wifi(uint8_t* data, int data_len){
-
-}
-
-uint8_t try_connect(){
-	return 0;
-}
-
-void handle_input(uint8_t* data, int data_len){
-
-}
-
-uint8_t send_data(){
-	return 0;
-}
-
-uint8_t detect_disconnect(){
-	return 0;
+    flag_send_data = 1;
 }
