@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Remote Control</title>
+  <style>
+    body, button {
+      color:rgb(128, 128, 128); 
+      font-size: 2rem;
+    }
+    body {
+      font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif ;
+      position: fixed; 
+      overflow: hidden;
+      touch-action: none; 
+      width: 98%;
+      margin: 1%;
+      -webkit-user-select: none; /* Safari 3+ and iOS Safari */
+      -ms-user-select: none;      /* IE 10-11 and older Edge */
+      user-select: none;
+    }
+
+    .bar {
+      width: 70%;
+      background-color: #ddd;
+    }
+
+    .progress {
+      width: 50%;
+      height: 1em;
+      background-color: #04AA6D;
+    }
+
+    .dc_progress {
+      width: 0%;
+      height: 1em;
+      background-color: blueviolet;
+    }
+
+    td {
+      width: 15%;
+    }
+
+    .tdd {
+      white-space: pre;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 5px; /* Space between buttons */
+      justify-content: center; /* Options: flex-start, center, flex-end, space-between */
+    }
+
+    .scalable-checkbox {
+      width: 1.5rem;
+      height: 1.5rem;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      border: 0.15rem solid rgb(128, 128, 128);
+      border-radius: 0.25rem;
+      display: inline-grid;
+      place-content: center;
+    }
+
+    .scalable-checkbox::before {
+      content: "";
+      width: 0.8rem;
+      height: 0.8rem;
+      transform: scale(0);
+      background-color: rgb(128, 128, 128);
+      clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+    }
+    .scalable-checkbox:checked::before {
+      transform: scale(1);
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <h3 id="status" style="color: crimson; text-align: center;">
+    NO CONNECTION
+  </h3>
+
+  <p>
+  <label style="font-size: 2rem;">
+    <input id="reset_input" type="checkbox" class="scalable-checkbox">
+    Reset joystick input
+  </label>
+  <br>
+  <label style="font-size: 2rem;">
+    <input id="floats_input" type="checkbox" class="scalable-checkbox" checked>
+    Joystick floats
+  </label>
+  </p>
+  
+  
+
+  <div id="main_control">
+    <table style="width: 100%" id="tel_display">
+      <tbody>
+        <tr>
+          <td>speed</td>
+          <td class="bar">
+            <div id="speed_pb" class="progress"></div>
+          </td>
+          <td class="tdd" id="speed">NULL</td>
+        </tr>
+        <tr>
+          <td>pitch</td>
+          <td class="bar">
+            <div id="pitch_pb" class="progress"></div>
+          </td>
+          <td class="tdd" id="pitch">NULL</td>
+        </tr>
+        <tr>
+          <td>roll</td>
+          <td class="bar">
+            <div id="roll_pb" class="progress"></div>
+          </td>
+          <td class="tdd" id="roll">NULL</td>
+        </tr>
+        <tr>
+          <td>rpm_mag</td>
+          <td class="bar">
+            <div id="rpm_mag_pb" class="progress"></div>
+          </td>
+          <td class="tdd" id="rpm_mag">NULL</td>
+        </tr>
+        <tr>
+          <td>rpm_opt</td>
+          <td class="bar">
+            <div id="rpm_opt_pb" class="progress"></div>
+          </td>
+          <td class="tdd" id="rpm_opt">NULL</td>
+        </tr>
+        <tr>
+          <td>dist</td>
+          <td class="bar">
+            <div id="dist_pb" class="dc_progress"></div>
+          </td>
+          <td class="tdd" id="dist">NULL</td>
+        </tr>
+        <tr>
+          <td>bat_lvl</td>
+          <td class="bar">
+            <div id="bat_lvl_pb" class="dc_progress"></div>
+          </td>
+          <td class="tdd" id="bat_lvl">NULL</td>
+        </tr>
+      </tbody>
+    </table>
+
+
+    <canvas id="canvas" name="game"></canvas>
+  </div>
+
+  <script>
+    var reset_input = document.getElementById("reset_input")
+    var floats_input = document.getElementById("floats_input")
+
+    var canvas, ctx;
+
+    window.addEventListener('load', () => {
+      canvas = document.getElementById('canvas');
+      ctx = canvas.getContext('2d');
+      resize();
+
+      document.addEventListener('mousedown', startDrawing);
+      document.addEventListener('mouseup', stopDrawing);
+      document.addEventListener('mousemove', Draw);
+
+      document.addEventListener('touchstart', startDrawing);
+      document.addEventListener('touchend', stopDrawing);
+      document.addEventListener('touchcancel', stopDrawing);
+      document.addEventListener('touchmove', Draw);
+      window.addEventListener('resize', resize);
+    });
+
+    
+    var width, height, radius, x_orig, y_orig;
+    function resize(x, y) {
+      width = window.innerWidth * 0.98;
+      radius = Math.min(window.innerWidth, window.innerHeight) * 0.2;
+      height = window.innerHeight * 0.98;
+
+      let default_h = window.innerWidth > window.innerHeight ? radius * 1.5 : height / 3
+
+      x_orig = x || width / 2;
+      y_orig = y || default_h;
+
+      ctx.canvas.width = width;
+      ctx.canvas.height = height;
+      background();
+      joystick(x_orig, y_orig);
+    }
+
+    function background() {
+      ctx.beginPath();
+      ctx.arc(x_orig, y_orig, radius + 20, 0, Math.PI * 2, true);
+      ctx.fillStyle = '#ECE5E5';
+      ctx.fill();
+    }
+
+    function joystick(width, height) {
+      ctx.beginPath();
+      ctx.arc(width, height, radius, 0, Math.PI * 2, true);
+      ctx.fillStyle = '#F08080';
+      ctx.fill();
+      ctx.strokeStyle = '#F6ABAB';
+      ctx.lineWidth = 8;
+      ctx.stroke();
+    }
+
+    let coord = { x: 0, y: 0 };
+    let relative_coord = { x: 0, y: 0 }
+    let paint = false;
+
+    function getPosition(event) {
+      if (event === undefined)
+        return
+      var mouse_x = event.clientX || event.touches[0].clientX;
+      var mouse_y = event.clientY || event.touches[0].clientY;
+      coord.x = mouse_x - canvas.offsetLeft;
+      coord.y = mouse_y - canvas.offsetTop;
+    }
+
+    function is_it_in_the_circle() {
+      var current_radius = Math.sqrt(Math.pow(coord.x - x_orig, 2) + Math.pow(coord.y - y_orig, 2));
+      if (radius >= current_radius) return true
+      else return false
+    }
+
+    function startDrawing(event) {
+      paint = true;
+      getPosition(event);
+      
+      console.log("!!!!",floats_input.checked, reset_input.checked)
+      if (floats_input.checked)
+        resize(coord.x, coord.y)
+      else
+        resize()
+
+      if (is_it_in_the_circle()) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        background();
+        joystick(coord.x, coord.y);
+        Draw();
+      }
+    }
+
+    function stopDrawing() {
+      paint = false;
+      if (!reset_input.checked)
+        return
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      background();
+      joystick(x_orig, y_orig);
+      relative_coord.x = 0;
+      relative_coord.y = 0;
+    }
+
+    function Draw(event) {
+      if (paint) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        background();
+        var angle_in_degrees, x, y, speed;
+        var angle = Math.atan2((coord.y - y_orig), (coord.x - x_orig));
+
+        if (Math.sign(angle) == -1) {
+          angle_in_degrees = Math.round(-angle * 180 / Math.PI);
+        }
+        else {
+          angle_in_degrees = Math.round(360 - angle * 180 / Math.PI);
+        }
+
+        if (is_it_in_the_circle()) {
+          joystick(coord.x, coord.y);
+          x = coord.x;
+          y = coord.y;
+        }
+        else {
+          x = radius * Math.cos(angle) + x_orig;
+          y = radius * Math.sin(angle) + y_orig;
+          joystick(x, y);
+        }
+
+        getPosition(event);
+        relative_coord.x = x - x_orig;
+        relative_coord.y = y - y_orig;
+      }
+    } 
+  </script>
+
+  <script>
+    // CONNECTION DRIVER
+    const CMD_PERIOD_MS = 100
+    const TEL_PERIOD_MS = 1000
+    const ERROR_CMD_PERIOD_MS = 1000
+    var TEL_FLAG = false
+
+    var interval_cmd
+    var interval_tel
+
+    var last_speed
+    var last_angle
+
+    function start_control() {
+      console.log('Control started');
+      interval_cmd = setInterval(call_send_packet, CMD_PERIOD_MS)
+      interval_tel = setInterval(set_tel_flag, TEL_PERIOD_MS)
+    }
+
+    function end_control() {
+      console.log('Control ended');
+      clearInterval(interval_cmd)
+      clearInterval(interval_tel)
+    }
+
+    function call_send_packet() {
+      var speed = -Math.round(relative_coord.y * 127 / radius)
+      var angle = Math.round(relative_coord.x * 127 / radius)
+      var new_speed = undefined
+      var new_angle = undefined
+
+      if (Math.abs(speed) < 4)
+        speed = 0
+      if (Math.abs(angle) < 4)
+        angle = 0
+
+      if (last_speed != speed)
+        new_speed = speed
+      if (last_angle != angle)
+        new_angle = angle
+
+      if (TEL_FLAG || new_speed !== undefined || new_angle !== undefined)
+        send_command(TEL_FLAG, new_speed, new_angle)
+      
+      TEL_FLAG = false
+      last_speed = new_speed || speed
+      last_angle = new_angle || angle
+    }
+
+    function set_tel_flag() {
+      TEL_FLAG = true
+    }
+
+    function handle_connected_change(connected) {
+      console.log(`Connection status changed: ${connected}`)
+      document.getElementById("status").hidden = connected
+    }
+    start_control()
+  </script>
+
+
+  <script>
+    // INTERFACE
+    var CONNECTED = true
+    var SEND_ERROR_COUNTER = 0
+    var ERROR_CNT_THRESHOLD = 3
+
+    const ALLOWED_CMD = [0x01, 0x02, 0x03, 0x04, 0x07, 0xFF]
+    const MAX_SPEED = 10
+    const MAX_RPM = 100
+
+    var TEL_FLAG = false
+    var SPEED = undefined
+    var ANGLE = undefined
+
+    var SQN_CNT = 0
+    var ADDR = 0x01
+    var CRC_PLACEHOLDER = 0xFC
+    var SQN_LOOKUP = {}
+    var ip = "192.168.5.1"
+    var port = "1001"
+    var ws_ip = `${ip}:${port}`
+    var TIMEOUT_MS = 1000
+
+    function uint8ArrayToHexMap(buffer) {
+      return Array.prototype.map.call(buffer, x =>
+        x.toString(16).padStart(2, '0')
+      ).join('');
+    }
+
+    function calculateCRC(data) {
+      const polynomial = 0x8c
+      let crc = 0x0
+
+      for (let i = 0; i < data.length; i++) {
+        crc ^= data[i]
+        for (let j = 0; j < 8; j++) {
+          if (crc & 0x01)
+            crc = (crc >> 1) ^ polynomial
+          else
+            crc >>= 1
+        }
+      }
+      return crc;
+    }
+    
+    function get_command_bytes(do_tel = false, speed = undefined, angle = undefined) {
+      var CMD = do_tel * 4 + (undefined != angle) * 2 + (undefined != speed)
+      if (!ALLOWED_CMD.includes(CMD))
+        return
+
+      var data = []
+      for (let i of [speed, angle])
+        if (i != undefined)
+          data.push(i)
+
+      var packet_body = [4 + data.length, SQN_CNT, ADDR, CMD, ...data]
+      var packet = new Uint8Array([0xAC, 0x53, ...packet_body, calculateCRC(packet_body)])
+      return packet
+    }
+
+    function send_command(do_tel = false, speed = undefined, angle = undefined) {
+      var CMD = do_tel * 4 + (undefined != angle) * 2 + (undefined != speed)
+      if (!ALLOWED_CMD.includes(CMD)) {
+        console.log("Forbidden command")
+        return
+      }
+      var bytes = get_command_bytes(do_tel, speed, angle)
+      if (bytes == undefined) 
+        return
+      var hex = uint8ArrayToHexMap(bytes)
+
+      
+      fetch(`http://${ws_ip}/${hex}`, {
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+        method: "GET"
+      })
+        .catch(handle_error)
+        .then(handle_response)
+      SQN_LOOKUP[SQN_CNT++] = CMD
+      return
+    }
+
+    async function handle_error(error) {
+      SEND_ERROR_COUNTER += 1
+      console.log(`This is error number ${SEND_ERROR_COUNTER}\n${error}`)
+      if ((SEND_ERROR_COUNTER > ERROR_CNT_THRESHOLD) && CONNECTED) {
+        CONNECTED = false
+        handle_connected_change(CONNECTED)
+      }
+      if (SEND_ERROR_COUNTER == 1) {
+        clearInterval(interval_cmd)
+        setInterval(call_send_packet, ERROR_CMD_PERIOD_MS)
+        console.log("Switched command timer to error time")
+      }
+    }
+
+    async function handle_response(html_response) {
+      if (html_response == undefined)
+        return
+      if (!CONNECTED) {
+        SEND_ERROR_COUNTER = 0
+        CONNECTED = true
+
+        clearInterval(interval_cmd)
+        setInterval(call_send_packet, CMD_PERIOD_MS)
+        console.log("Switched command timer to normal time")
+        handle_connected_change(CONNECTED)
+      }
+      var content = await html_response.arrayBuffer()
+      var raw_data = new Uint8Array(content)
+      document.getElementById("response_packet").textContent = uint8ArrayToHexMap(raw_data)
+
+      var view = new DataView(content)
+
+      var pre_AC = view.getUint8(0)
+      var pre_53 = view.getUint8(1)
+      var len = view.getUint8(2)
+      var sqn = view.getUint8(3)
+      var addr = view.getUint8(4)
+      var ack = view.getUint8(5)
+
+      var cmd = SQN_LOOKUP[sqn]
+      delete SQN_LOOKUP[sqn]
+
+      if (cmd == 0x04 || cmd == 0x07) {
+        var tel_num = view.getUint8(6 + 0)
+        var speed = view.getInt16(6 + 1) / 2 ** 15 * MAX_SPEED
+        var pitch = view.getInt16(6 + 3) / 2 ** 15 * 90
+        var roll = view.getInt16(6 + 5) / 2 ** 15 * 90
+        var rpm_mag = view.getInt16(6 + 7) / 2 ** 15 * MAX_RPM
+        var rpm_opt = view.getInt16(6 + 9) / 2 ** 15 * MAX_RPM
+        var dist = view.getUint16(6 + 11) / 2 ** 16 * 2000 / 10
+        var bat_lvl = view.getUint8(6 + 13) / 2 ** 8 * 100
+        var valid = view.getUint8(6 + 14)
+
+        var array = [speed, pitch, roll, rpm_mag, rpm_opt, dist, bat_lvl]
+        var vals_100max = [MAX_SPEED / 200, 90 / 200, 90 / 200, MAX_RPM / 200, MAX_RPM / 200, 2000 / 1000, 1]
+        var offsets = [50, 50, 50, 50, 50, 0, 0]
+        var bim = [7, 6, 5, 4, 3, 2, 1]
+        var element_ids = ['speed', 'pitch', 'roll', 'rpm_mag', 'rpm_opt', 'dist', 'bat_lvl']
+        for (let i = 0; i < array.length; i++) {
+          let bit_valid = valid >> bim[i] & 1
+          let text = bit_valid ? String(Math.round(array[i])).padStart(4, " ") : "INVALID"
+          let width = offsets[i] + (bit_valid ? array[i] / vals_100max[i] : 0)
+          document.getElementById(element_ids[i]).innerHTML = text
+          document.getElementById(element_ids[i] + "_pb").style.width = width + "%";
+        }
+      }
+
+      var crc = view.getUint8(len + 2)
+    }
+  </script>
+</body>
+
+</html>
