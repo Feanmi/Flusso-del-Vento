@@ -1,3 +1,19 @@
+#include "stm32f4xx_hal.h"
+#include "TJ_MPU6050.h"
+#include <math.h>
+
+/* ====== External data ====== */
+extern float SPEED_MEASURED_ACC;
+extern uint8_t DATA_VALID_FLAG[2];
+
+/* ====== Public API ====== */
+void init_gyroscope(I2C_HandleTypeDef *hi2c);
+void read_accelleration(void);
+
+#endif /* ACC_SENSOR_H */
+
+
+
 // Scaling factors (y = scale*x)
 #define SCALE_ACC_X 1.0
 #define SCALE_ACC_Y 1.0

@@ -2,8 +2,6 @@
 // Structure for accelerometer calibration data
 
 I2C_HandleTypeDef hi2c1;
-
-
 RawData_Def myAccelRaw, myGyroRaw;
 ScaledData_Def myAccelScaled, myGyroScaled;
 
