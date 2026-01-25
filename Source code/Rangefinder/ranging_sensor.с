@@ -1,19 +1,13 @@
 #include <modules/ranging_sensor.h>
 
-/*
-	Global var
-*/ 
+// Global var
 extern uint16_t DISTANCE_MEASURED;
 extern uint8_t DATA_VALID_FLAGS;
 
-/*
-	Custom
-*/ 
+// Custom
 static int medianFilter10(int arr[]);
 
-/*
-	for ranging sensor
-*/ 
+// for ranging sensor
 static uint32_t refSpadCount;
 static uint8_t isApertureSpads;
 static uint8_t VhvSettings;
@@ -25,12 +19,6 @@ static VL53L0X_DEV    Dev = &vl53l0x_c;
 //temporary global structure
 // telemetry_temp_t structure;
 
-/*
-	## ranging sensor init function
-	- Assigns I2C controller and I2C address to VL53L0X structure
-	- Controls XSHUT GPIO
-	- Inits VL53L0X for single measurement 2m
-*/
 void init_ranging_sensor()
 {
 	  Dev->I2cHandle = &hi2c1;
@@ -63,11 +51,6 @@ void init_ranging_sensor()
 	   VL53L0X_SetVcselPulsePeriod(Dev, VL53L0X_VCSEL_PERIOD_FINAL_RANGE, 14);
 }
 
-/*
-	## median filter function
-	- window size = 10
-	- takes median value of array as filtered data
-*/
 int medianFilter10(int arr[]) {
     int temp[10];
 
@@ -88,12 +71,6 @@ int medianFilter10(int arr[]) {
     return temp[5]; // медиана
 }
 
-/*
-	## Main ranging sensor read distance function
-	- reads 10 values of ranging data
-	- sends them to be filtered
-	- updates structure and and sets data valid flag
-*/
 void read_distance()
 {
 	  int buffer[10] = {0};
@@ -101,16 +78,19 @@ void read_distance()
 	  {
 		  VL53L0X_PerformSingleRangingMeasurement(Dev, &RangingData);
 
+
+
 		  if(RangingData.RangeStatus == 0)
 		  {
-			  buffer[j] = RangingData.RangeMilliMeter;
+			  if (RangingData.RangeMilliMeter == 0) buffer[j] = 2000;
+			  else buffer[j] = RangingData.RangeMilliMeter;
 		  }
 		  else
 		  {
 			  //error handling
-			  return;
+			  buffer[j] = 2000;
 		  }
 	  }
 	  DISTANCE_MEASURED = medianFilter10(buffer);
-	  set_flag_bit(&DATA_VALID_FLAGS, 1, 1);
+	  set_flag_bit(&DATA_VALID_FLAGS, 2, 1);
 }
