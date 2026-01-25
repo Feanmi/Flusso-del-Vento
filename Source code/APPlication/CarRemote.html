@@ -4,19 +4,23 @@
 <head>
   <title>Remote Control</title>
   <style>
-    body, button {
-      color:rgb(128, 128, 128); 
+    body,
+    button {
+      color: rgb(128, 128, 128);
       font-size: 2rem;
     }
+
     body {
-      font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif ;
-      position: fixed; 
+      font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+      position: fixed;
       overflow: hidden;
-      touch-action: none; 
+      touch-action: none;
       width: 98%;
       margin: 1%;
-      -webkit-user-select: none; /* Safari 3+ and iOS Safari */
-      -ms-user-select: none;      /* IE 10-11 and older Edge */
+      -webkit-user-select: none;
+      /* Safari 3+ and iOS Safari */
+      -ms-user-select: none;
+      /* IE 10-11 and older Edge */
       user-select: none;
     }
 
@@ -47,8 +51,10 @@
 
     .button-row {
       display: flex;
-      gap: 5px; /* Space between buttons */
-      justify-content: center; /* Options: flex-start, center, flex-end, space-between */
+      gap: 5px;
+      /* Space between buttons */
+      justify-content: center;
+      /* Options: flex-start, center, flex-end, space-between */
     }
 
     .scalable-checkbox {
@@ -71,32 +77,34 @@
       background-color: rgb(128, 128, 128);
       clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
     }
+
     .scalable-checkbox:checked::before {
       transform: scale(1);
     }
 
+    .red {
+      background-color: crimson;
+    }
   </style>
 </head>
 
-<body>
+<body class="red">
 
-  <h3 id="status" style="color: crimson; text-align: center;">
-    NO CONNECTION
-  </h3>
+  
 
   <p>
-  <label style="font-size: 2rem;">
-    <input id="reset_input" type="checkbox" class="scalable-checkbox">
-    Reset joystick input
-  </label>
-  <br>
-  <label style="font-size: 2rem;">
-    <input id="floats_input" type="checkbox" class="scalable-checkbox" checked>
-    Joystick floats
-  </label>
+    <label style="font-size: 2rem;">
+      <input id="reset_input" type="checkbox" class="scalable-checkbox">
+      Reset joystick input
+    </label>
+    <br>
+    <label style="font-size: 2rem;">
+      <input id="floats_input" type="checkbox" class="scalable-checkbox">
+      Joystick floats
+    </label>
   </p>
-  
-  
+
+
 
   <div id="main_control">
     <table style="width: 100%" id="tel_display">
@@ -155,6 +163,10 @@
 
 
     <canvas id="canvas" name="game"></canvas>
+
+    <h3 id="status" style="color: crimson; text-align: center;">
+      NO CONNECTION
+    </h3>
   </div>
 
   <script>
@@ -179,7 +191,7 @@
       window.addEventListener('resize', resize);
     });
 
-    
+
     var width, height, radius, x_orig, y_orig;
     function resize(x, y) {
       width = window.innerWidth * 0.98;
@@ -236,8 +248,7 @@
     function startDrawing(event) {
       paint = true;
       getPosition(event);
-      
-      console.log("!!!!",floats_input.checked, reset_input.checked)
+
       if (floats_input.checked)
         resize(coord.x, coord.y)
       else
@@ -290,38 +301,41 @@
         getPosition(event);
         relative_coord.x = x - x_orig;
         relative_coord.y = y - y_orig;
+
+        call_send_packet()
       }
     } 
   </script>
 
+
+
+
+
+
   <script>
     // CONNECTION DRIVER
-    const CMD_PERIOD_MS = 100
-    const TEL_PERIOD_MS = 1000
-    const ERROR_CMD_PERIOD_MS = 1000
+    const TEL_PERIOD_MS = 5000
     var TEL_FLAG = false
 
     var interval_cmd
-    var interval_tel
+    var interval_tel = setInterval(set_tel_flag, TEL_PERIOD_MS)
 
     var last_speed
     var last_angle
 
-    function start_control() {
-      console.log('Control started');
-      interval_cmd = setInterval(call_send_packet, CMD_PERIOD_MS)
-      interval_tel = setInterval(set_tel_flag, TEL_PERIOD_MS)
-    }
-
-    function end_control() {
-      console.log('Control ended');
-      clearInterval(interval_cmd)
-      clearInterval(interval_tel)
-    }
-
     function call_send_packet() {
       var speed = -Math.round(relative_coord.y * 127 / radius)
       var angle = Math.round(relative_coord.x * 127 / radius)
+
+      // // angle = [-127, 127]
+      // // angle = [-127, -64, 0, 64, 127]
+      // // angle = [-127, -95, -32, 32, 95, 127]
+      // angle = angle < -95 ? -127 :
+      //   angle < -32 ? -64 :
+      //   angle < 32 ? 0 :
+      //   angle < 95 ? 64 :
+      //   127
+
       var new_speed = undefined
       var new_angle = undefined
 
@@ -335,53 +349,66 @@
       if (last_angle != angle)
         new_angle = angle
 
-      if (TEL_FLAG || new_speed !== undefined || new_angle !== undefined)
-        send_command(TEL_FLAG, new_speed, new_angle)
+      if (TEL_FLAG || (new_speed !== undefined && new_angle !== undefined)) {
+        if (send_command(TEL_FLAG, new_speed, new_angle)) {
+          TEL_FLAG = false
+          last_speed = new_speed || speed
+          last_angle = new_angle || angle
+        }
+      }
       
-      TEL_FLAG = false
-      last_speed = new_speed || speed
-      last_angle = new_angle || angle
+      
     }
 
     function set_tel_flag() {
       TEL_FLAG = true
+      call_send_packet()
     }
 
     function handle_connected_change(connected) {
       console.log(`Connection status changed: ${connected}`)
       document.getElementById("status").hidden = connected
     }
-    start_control()
   </script>
 
 
+
+
+
   <script>
-    // INTERFACE
-    var CONNECTED = true
-    var SEND_ERROR_COUNTER = 0
-    var ERROR_CNT_THRESHOLD = 3
+    // INTERAFACE
+    var ip = "192.168.5.1"
+    var port = "80"
+    var ws_ip = port ? `${ip}:${port}/ws` : `${ip}/ws`
+
+    var SOCKET_URL = `ws://${ws_ip}`
+    var WS_CONNECT_LOCK = false
+    var WS_STOP_INTERVAL
+    var socket
+
+    var SOCKET_RECONNECT_TIMEOUT = 1000
+    var MIN_CMD_DELAY = 100
+    var AWAITING_RESPONSE = false
+    var LAST_DATE = new Date()
+    var LAST_CMD_DATA = undefined
 
     const ALLOWED_CMD = [0x01, 0x02, 0x03, 0x04, 0x07, 0xFF]
-    const MAX_SPEED = 10
-    const MAX_RPM = 100
-
-    var TEL_FLAG = false
-    var SPEED = undefined
-    var ANGLE = undefined
+    const MAX_SPEED = 1
+    const MAX_RPM = 1
 
     var SQN_CNT = 0
     var ADDR = 0x01
     var CRC_PLACEHOLDER = 0xFC
     var SQN_LOOKUP = {}
-    var ip = "192.168.5.1"
-    var port = "1001"
-    var ws_ip = `${ip}:${port}`
-    var TIMEOUT_MS = 1000
 
-    function uint8ArrayToHexMap(buffer) {
-      return Array.prototype.map.call(buffer, x =>
-        x.toString(16).padStart(2, '0')
-      ).join('');
+    console.log(SOCKET_URL)
+    connect_socket()
+
+    function set_socket_connected_display(value) {
+      if (!value)
+        document.body.classList.add('red')
+      else
+        document.body.classList.remove('red')
     }
 
     function calculateCRC(data) {
@@ -399,7 +426,7 @@
       }
       return crc;
     }
-    
+
     function get_command_bytes(do_tel = false, speed = undefined, angle = undefined) {
       var CMD = do_tel * 4 + (undefined != angle) * 2 + (undefined != speed)
       if (!ALLOWED_CMD.includes(CMD))
@@ -415,59 +442,37 @@
       return packet
     }
 
-    function send_command(do_tel = false, speed = undefined, angle = undefined) {
-      var CMD = do_tel * 4 + (undefined != angle) * 2 + (undefined != speed)
-      if (!ALLOWED_CMD.includes(CMD)) {
-        console.log("Forbidden command")
-        return
-      }
-      var bytes = get_command_bytes(do_tel, speed, angle)
-      if (bytes == undefined) 
-        return
-      var hex = uint8ArrayToHexMap(bytes)
+    function uint8ArrayToHexMap(buffer) {
+      return Array.prototype.map.call(buffer, x =>
+        x.toString(16).padStart(2, '0')
+      ).join(' ');
+    }
 
+
+
+    function safe_send(packet) {
+      if ( AWAITING_RESPONSE || (new Date() - LAST_DATE < MIN_CMD_DELAY) )
+        return false
+
+      console.log("Отправляем данные на сервер:", packet)
+      socket.send(packet.buffer)
+      AWAITING_RESPONSE = true
+      LAST_DATE = new Date()
+      return true
+    }
+
+    function handle_response(byteArray) {
+      AWAITING_RESPONSE = false
+      if (LAST_CMD_DATA !== undefined) {
+        send_command(...LAST_CMD_DATA)
+        LAST_CMD_DATA = undefined
+        TEL_FLAG = false
+      }
       
-      fetch(`http://${ws_ip}/${hex}`, {
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-        method: "GET"
-      })
-        .catch(handle_error)
-        .then(handle_response)
-      SQN_LOOKUP[SQN_CNT++] = CMD
-      return
-    }
-
-    async function handle_error(error) {
-      SEND_ERROR_COUNTER += 1
-      console.log(`This is error number ${SEND_ERROR_COUNTER}\n${error}`)
-      if ((SEND_ERROR_COUNTER > ERROR_CNT_THRESHOLD) && CONNECTED) {
-        CONNECTED = false
-        handle_connected_change(CONNECTED)
-      }
-      if (SEND_ERROR_COUNTER == 1) {
-        clearInterval(interval_cmd)
-        setInterval(call_send_packet, ERROR_CMD_PERIOD_MS)
-        console.log("Switched command timer to error time")
-      }
-    }
-
-    async function handle_response(html_response) {
-      if (html_response == undefined)
+      if (byteArray == undefined)
         return
-      if (!CONNECTED) {
-        SEND_ERROR_COUNTER = 0
-        CONNECTED = true
 
-        clearInterval(interval_cmd)
-        setInterval(call_send_packet, CMD_PERIOD_MS)
-        console.log("Switched command timer to normal time")
-        handle_connected_change(CONNECTED)
-      }
-      var content = await html_response.arrayBuffer()
-      var raw_data = new Uint8Array(content)
-      document.getElementById("response_packet").textContent = uint8ArrayToHexMap(raw_data)
-
-      var view = new DataView(content)
+      var view = new DataView(byteArray.buffer)
 
       var pre_AC = view.getUint8(0)
       var pre_53 = view.getUint8(1)
@@ -506,6 +511,68 @@
 
       var crc = view.getUint8(len + 2)
     }
+
+    function send_command(do_tel = false, speed = undefined, angle = undefined) {
+      var CMD = do_tel * 4 + (undefined != angle) * 2 + (undefined != speed)
+      if (!ALLOWED_CMD.includes(CMD)) {
+        console.log("Forbidden command")
+        return
+      }
+      var bytes = get_command_bytes(do_tel, speed, angle)
+      if (bytes == undefined)
+        return
+
+      if (!safe_send(bytes)) {
+        LAST_CMD_DATA = [do_tel, speed, angle]
+        return
+      }
+      
+      SQN_LOOKUP[SQN_CNT] = CMD
+      SQN_CNT++
+      return
+    }
+
+    function connect_socket() {
+      if (WS_CONNECT_LOCK)
+        return
+      WS_CONNECT_LOCK = true
+      socket = new WebSocket(SOCKET_URL);
+      socket.binaryType = "arraybuffer";
+      WS_CONNECT_LOCK = false
+
+      socket.onopen = function(e) {
+        set_socket_connected_display(true)
+        console.log("[open] Соединение установлено");
+        WS_CONNECT_LOCK = false
+      };
+
+      socket.onmessage = function(event) {
+        var data = event.data
+        var byteArray = new Uint8Array(data)
+        console.log(`[message] Данные получены с сервера: `, uint8ArrayToHexMap(byteArray), data);
+        console.log(SQN_LOOKUP)
+        handle_response(byteArray)
+      };
+
+      socket.onclose = function(event) {
+        set_socket_connected_display(false)
+        if (event.wasClean) {
+          console.log(`[close] Соединение закрыто чисто, код=${event.code} причина=${event.reason}`);
+        } else {
+          // например, сервер убил процесс или сеть недоступна
+          // обычно в этом случае event.code 1006
+          console.log('[close] Соединение прервано');
+        }
+        setTimeout(connect_socket, SOCKET_RECONNECT_TIMEOUT)
+      };
+
+      socket.onerror = function(error) {
+        set_socket_connected_display(false)
+        console.log(`[error]`);
+        setTimeout(connect_socket, SOCKET_RECONNECT_TIMEOUT)
+      };
+    }
+
   </script>
 </body>
 
