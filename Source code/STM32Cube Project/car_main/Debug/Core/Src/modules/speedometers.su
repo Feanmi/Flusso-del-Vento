@@ -1,4 +1,0 @@
-../Core/Src/modules/speedometers.c:3:6:init_mag_rotation_speed_meter	4	static
-../Core/Src/modules/speedometers.c:7:6:read_speed_mag	4	static
-../Core/Src/modules/speedometers.c:11:6:init_opt_rotation_speed_meter	4	static
-../Core/Src/modules/speedometers.c:15:6:read_speed_opt	4	static

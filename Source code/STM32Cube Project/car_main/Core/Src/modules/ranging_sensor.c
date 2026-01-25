@@ -78,15 +78,19 @@ void read_distance()
 	  {
 		  VL53L0X_PerformSingleRangingMeasurement(Dev, &RangingData);
 
+
+
 		  if(RangingData.RangeStatus == 0)
 		  {
-			  buffer[j] = RangingData.RangeMilliMeter;
+			  if (RangingData.RangeMilliMeter == 0) buffer[j] = 2000;
+			  else buffer[j] = RangingData.RangeMilliMeter;
 		  }
 		  else
 		  {
 			  //error handling
+			  buffer[j] = 2000;
 		  }
 	  }
 	  DISTANCE_MEASURED = medianFilter10(buffer);
-	  set_flag_bit(&DATA_VALID_FLAGS, 1, 1);
+	  set_flag_bit(&DATA_VALID_FLAGS, 2, 1);
 }

@@ -68,6 +68,8 @@ typedef enum {
 /* USER CODE BEGIN PV */
 telem_state_t telem_state = ACCELEROMETER;
 
+int flag_send_data = 0;
+
 uint32_t telem_last_tick;
 /* USER CODE END PV */
 
@@ -123,13 +125,14 @@ int main(void)
   MX_USART2_UART_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-  __disable_irq();
+//  __disable_irq();
+  __enable_irq();
 
   telem_last_tick = HAL_GetTick();
   init_malfunction_detection();
   init_gyroscope();
-  init_mag_rotation_speed_meter();
-  init_opt_rotation_speed_meter();
+//  init_mag_rotation_speed_meter();
+//  init_opt_rotation_speed_meter();
   init_batt_sense();
   init_ranging_sensor();
   init_motor();
@@ -137,7 +140,7 @@ int main(void)
   init_wifi();
 //  init_bluetooth();
 
-  __enable_irq();
+//  __enable_irq();
 
 
   /* USER CODE END 2 */
@@ -159,21 +162,23 @@ int main(void)
 				read_accelleration();
 				break;
 			case SPEEDOMETERS_MAG:
-				read_speed_mag();
+//				read_speed_mag();
 				break;
 			case SPEEDOMETERS_OPT:
-				read_speed_opt();
+//				read_speed_mag_opt();
 				break;
 			case BATTERY_SENSOR:
 				read_batt_sense();
 				break;
 			case RANGING_SENSOR:
 				read_distance();
+        flag_send_data = 1;
 				break;
 			default:
 				break;
 		  }
-		  telem_state = (telem_state + 1) % MAX_TELEM_STATE;
+//		  telem_state = (telem_state + 1) % MAX_TELEM_STATE;
+		  telem_state = RANGING_SENSOR;
       telem_last_tick = HAL_GetTick();
 //		  telem_state = (telem_state == MAX_TELEM_STATE - 1)? 0 : telem_state + 1;
 	  }

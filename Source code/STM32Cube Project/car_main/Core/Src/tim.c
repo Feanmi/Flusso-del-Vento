@@ -45,7 +45,7 @@ void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 7;
+  htim2.Init.Prescaler = 31;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim2.Init.Period = 65535;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -256,7 +256,22 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* tim_pwmHandle)
     /* TIM2 clock enable */
     __HAL_RCC_TIM2_CLK_ENABLE();
   /* USER CODE BEGIN TIM2_MspInit 1 */
+    GPIO_InitTypeDef GPIO_InitStruct;
 
+      /*##-1- Enable peripherals and GPIO Clocks #################################*/
+      /* TIMx Peripheral clock enable */
+
+      /* Enable GPIO Channels Clock */
+      __HAL_RCC_GPIOA_CLK_ENABLE();
+
+      /*##-2- Configure I/Os #####################################################*/
+      /* Configure PB.00 (TIM3_Channel3) in output, push-pull, alternate function mode */
+      GPIO_InitStruct.Pin = GPIO_PIN_1;
+      GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+      GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+      GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+      GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
+      HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
   /* USER CODE END TIM2_MspInit 1 */
   }
   else if(tim_pwmHandle->Instance==TIM4)

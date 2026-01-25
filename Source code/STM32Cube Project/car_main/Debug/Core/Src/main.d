@@ -34,14 +34,14 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Core/Inc/common.h ../Core/Inc/modules/acellerometer.h \
  ../Core/Inc/modules/battery_sensor.h ../Core/Inc/modules/bluetooth.h \
  ../Core/Inc/modules/motor.h ../Core/Inc/modules/ranging_sensor.h \
- C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/core/inc/vl53l0x_api.h \
- C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/core/inc/vl53l0x_api_strings.h \
- C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/core/inc/vl53l0x_def.h \
- C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/core/inc/vl53l0x_device.h \
- C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/platform/inc/vl53l0x_types.h \
- C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/platform/inc/vl53l0x_platform.h \
- C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/core/inc/vl53l0x_def.h \
- C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/platform/inc/vl53l0x_platform_log.h \
+ C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/core/inc/vl53l0x_api.h \
+ C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/core/inc/vl53l0x_api_strings.h \
+ C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/core/inc/vl53l0x_def.h \
+ C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/core/inc/vl53l0x_device.h \
+ C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/platform/inc/vl53l0x_types.h \
+ C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/platform/inc/vl53l0x_platform.h \
+ C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/core/inc/vl53l0x_def.h \
+ C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/platform/inc/vl53l0x_platform_log.h \
  ../Core/Inc/modules/servo.h ../Core/Inc/modules/speedometers.h \
  ../Core/Inc/modules/wifi.h ../Core/Inc/modules/malfunction.h
 ../Core/Inc/main.h:
@@ -88,14 +88,14 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Core/Inc/modules/bluetooth.h:
 ../Core/Inc/modules/motor.h:
 ../Core/Inc/modules/ranging_sensor.h:
-C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/core/inc/vl53l0x_api.h:
-C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/core/inc/vl53l0x_api_strings.h:
-C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/core/inc/vl53l0x_def.h:
-C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/core/inc/vl53l0x_device.h:
-C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/platform/inc/vl53l0x_types.h:
-C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/platform/inc/vl53l0x_platform.h:
-C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/core/inc/vl53l0x_def.h:
-C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/platform/inc/vl53l0x_platform_log.h:
+C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/core/inc/vl53l0x_api.h:
+C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/core/inc/vl53l0x_api_strings.h:
+C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/core/inc/vl53l0x_def.h:
+C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/core/inc/vl53l0x_device.h:
+C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/platform/inc/vl53l0x_types.h:
+C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/platform/inc/vl53l0x_platform.h:
+C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/core/inc/vl53l0x_def.h:
+C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/platform/inc/vl53l0x_platform_log.h:
 ../Core/Inc/modules/servo.h:
 ../Core/Inc/modules/speedometers.h:
 ../Core/Inc/modules/wifi.h:

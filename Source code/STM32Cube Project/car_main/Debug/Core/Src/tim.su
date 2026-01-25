@@ -3,10 +3,10 @@
 ../Core/Src/tim.c:118:6:MX_TIM4_Init	32	static
 ../Core/Src/tim.c:162:6:MX_TIM5_Init	32	static
 ../Core/Src/tim.c:205:6:MX_TIM9_Init	32	static
-../Core/Src/tim.c:248:6:HAL_TIM_PWM_MspInit	24	static
-../Core/Src/tim.c:275:6:HAL_TIM_Base_MspInit	24	static
-../Core/Src/tim.c:295:6:HAL_TIM_IC_MspInit	56	static
-../Core/Src/tim.c:346:6:HAL_TIM_MspPostInit	48	static
-../Core/Src/tim.c:394:6:HAL_TIM_PWM_MspDeInit	16	static
-../Core/Src/tim.c:421:6:HAL_TIM_Base_MspDeInit	16	static
-../Core/Src/tim.c:440:6:HAL_TIM_IC_MspDeInit	16	static
+../Core/Src/tim.c:248:6:HAL_TIM_PWM_MspInit	48	static
+../Core/Src/tim.c:290:6:HAL_TIM_Base_MspInit	24	static
+../Core/Src/tim.c:310:6:HAL_TIM_IC_MspInit	56	static
+../Core/Src/tim.c:361:6:HAL_TIM_MspPostInit	48	static
+../Core/Src/tim.c:409:6:HAL_TIM_PWM_MspDeInit	16	static
+../Core/Src/tim.c:436:6:HAL_TIM_Base_MspDeInit	16	static
+../Core/Src/tim.c:455:6:HAL_TIM_IC_MspDeInit	16	static

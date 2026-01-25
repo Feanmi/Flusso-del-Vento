@@ -32,14 +32,14 @@ Core/Src/modules/ranging_sensor.o: ../Core/Src/modules/ranging_sensor.c \
  ../Drivers/STM32L1xx_HAL_Driver/Inc/stm32l1xx_hal_uart.h \
  ../Drivers/STM32L1xx_HAL_Driver/Inc/stm32l1xx_hal_exti.h \
  ../Core/Inc/i2c.h \
- C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/core/inc/vl53l0x_api.h \
- C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/core/inc/vl53l0x_api_strings.h \
- C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/core/inc/vl53l0x_def.h \
- C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/core/inc/vl53l0x_device.h \
- C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/platform/inc/vl53l0x_types.h \
- C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/platform/inc/vl53l0x_platform.h \
- C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/core/inc/vl53l0x_def.h \
- C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/platform/inc/vl53l0x_platform_log.h
+ C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/core/inc/vl53l0x_api.h \
+ C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/core/inc/vl53l0x_api_strings.h \
+ C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/core/inc/vl53l0x_def.h \
+ C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/core/inc/vl53l0x_device.h \
+ C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/platform/inc/vl53l0x_types.h \
+ C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/platform/inc/vl53l0x_platform.h \
+ C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/core/inc/vl53l0x_def.h \
+ C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/platform/inc/vl53l0x_platform_log.h
 ../Core/Inc/modules/ranging_sensor.h:
 ../Core/Inc/common.h:
 ../Core/Inc/gpio.h:
@@ -75,11 +75,11 @@ Core/Src/modules/ranging_sensor.o: ../Core/Src/modules/ranging_sensor.c \
 ../Drivers/STM32L1xx_HAL_Driver/Inc/stm32l1xx_hal_uart.h:
 ../Drivers/STM32L1xx_HAL_Driver/Inc/stm32l1xx_hal_exti.h:
 ../Core/Inc/i2c.h:
-C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/core/inc/vl53l0x_api.h:
-C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/core/inc/vl53l0x_api_strings.h:
-C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/core/inc/vl53l0x_def.h:
-C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/core/inc/vl53l0x_device.h:
-C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/platform/inc/vl53l0x_types.h:
-C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/platform/inc/vl53l0x_platform.h:
-C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/core/inc/vl53l0x_def.h:
-C:/my_projects/car_main_last_2/car_main/Drivers/VL53L0X/platform/inc/vl53l0x_platform_log.h:
+C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/core/inc/vl53l0x_api.h:
+C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/core/inc/vl53l0x_api_strings.h:
+C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/core/inc/vl53l0x_def.h:
+C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/core/inc/vl53l0x_device.h:
+C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/platform/inc/vl53l0x_types.h:
+C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/platform/inc/vl53l0x_platform.h:
+C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/core/inc/vl53l0x_def.h:
+C:/my_projects/CRACK/huy/car_main\ (2)/car_main/Drivers/VL53L0X/platform/inc/vl53l0x_platform_log.h:

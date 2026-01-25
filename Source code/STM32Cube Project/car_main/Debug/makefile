@@ -63,8 +63,8 @@ all: main-build
 main-build: car_main.elf secondary-outputs
 
 # Tool invocations
-car_main.elf car_main.map: $(OBJS) $(USER_OBJS) C:\my_projects\car_main_last_2\car_main\STM32L151CCTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "car_main.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\my_projects\car_main_last_2\car_main\STM32L151CCTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="car_main.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+car_main.elf car_main.map: $(OBJS) $(USER_OBJS) C:\my_projects\CRACK\huy\car_main\ (2)\car_main\STM32L151CCTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "car_main.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\my_projects\CRACK\huy\car_main (2)\car_main\STM32L151CCTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="car_main.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
