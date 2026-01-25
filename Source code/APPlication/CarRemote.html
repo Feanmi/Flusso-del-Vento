@@ -314,7 +314,7 @@
 
   <script>
     // CONNECTION DRIVER
-    const TEL_PERIOD_MS = 5000
+    const TEL_PERIOD_MS = 1000
     var TEL_FLAG = false
 
     var interval_cmd
@@ -383,7 +383,7 @@
 
     var SOCKET_URL = `ws://${ws_ip}`
     var WS_CONNECT_LOCK = false
-    var WS_STOP_INTERVAL
+    var WS_IS_CONNECTED = false
     var socket
 
     var SOCKET_RECONNECT_TIMEOUT = 1000
@@ -405,6 +405,7 @@
     connect_socket()
 
     function set_socket_connected_display(value) {
+      WS_IS_CONNECTED = value
       if (!value)
         document.body.classList.add('red')
       else
@@ -451,7 +452,7 @@
 
 
     function safe_send(packet) {
-      if ( AWAITING_RESPONSE || (new Date() - LAST_DATE < MIN_CMD_DELAY) )
+      if ((!WS_IS_CONNECTED) || AWAITING_RESPONSE || (new Date() - LAST_DATE < MIN_CMD_DELAY) )
         return false
 
       console.log("Отправляем данные на сервер:", packet)
@@ -491,12 +492,12 @@
         var roll = view.getInt16(6 + 5) / 2 ** 15 * 90
         var rpm_mag = view.getInt16(6 + 7) / 2 ** 15 * MAX_RPM
         var rpm_opt = view.getInt16(6 + 9) / 2 ** 15 * MAX_RPM
-        var dist = view.getUint16(6 + 11) / 2 ** 16 * 2000 / 10
+        var dist = view.getUint16(6 + 11) / 2 ** 16 * 100
         var bat_lvl = view.getUint8(6 + 13) / 2 ** 8 * 100
         var valid = view.getUint8(6 + 14)
 
         var array = [speed, pitch, roll, rpm_mag, rpm_opt, dist, bat_lvl]
-        var vals_100max = [MAX_SPEED / 200, 90 / 200, 90 / 200, MAX_RPM / 200, MAX_RPM / 200, 2000 / 1000, 1]
+        var vals_100max = [MAX_SPEED / 200, 90 / 200, 90 / 200, MAX_RPM / 200, MAX_RPM / 200, 1, 1]
         var offsets = [50, 50, 50, 50, 50, 0, 0]
         var bim = [7, 6, 5, 4, 3, 2, 1]
         var element_ids = ['speed', 'pitch', 'roll', 'rpm_mag', 'rpm_opt', 'dist', 'bat_lvl']
