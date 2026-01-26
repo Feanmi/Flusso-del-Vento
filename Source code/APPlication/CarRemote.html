@@ -395,6 +395,7 @@
     const ALLOWED_CMD = [0x01, 0x02, 0x03, 0x04, 0x07, 0xFF]
     const MAX_SPEED = 1
     const MAX_RPM = 1
+    const MAX_DISTANCE = 2000
 
     var SQN_CNT = 0
     var ADDR = 0x01
@@ -487,17 +488,19 @@
 
       if (cmd == 0x04 || cmd == 0x07) {
         var tel_num = view.getUint8(6 + 0)
-        var speed = view.getInt16(6 + 1) / 2 ** 15 * MAX_SPEED
+        var speed = view.getInt16(6 + 1) 
+        // console.log("SPEED: ", speed)
+        speed = speed / 2 ** 15 * MAX_SPEED
         var pitch = view.getInt16(6 + 3) / 2 ** 15 * 90
         var roll = view.getInt16(6 + 5) / 2 ** 15 * 90
         var rpm_mag = view.getInt16(6 + 7) / 2 ** 15 * MAX_RPM
         var rpm_opt = view.getInt16(6 + 9) / 2 ** 15 * MAX_RPM
-        var dist = view.getUint16(6 + 11) / 2 ** 16 * 100
+        var dist = view.getUint16(6 + 11)
         var bat_lvl = view.getUint8(6 + 13) / 2 ** 8 * 100
         var valid = view.getUint8(6 + 14)
 
         var array = [speed, pitch, roll, rpm_mag, rpm_opt, dist, bat_lvl]
-        var vals_100max = [MAX_SPEED / 200, 90 / 200, 90 / 200, MAX_RPM / 200, MAX_RPM / 200, 1, 1]
+        var vals_100max = [MAX_SPEED / 200, 90 / 200, 90 / 200, MAX_RPM / 200, MAX_RPM / 200, MAX_DISTANCE / 100, 1]
         var offsets = [50, 50, 50, 50, 50, 0, 0]
         var bim = [7, 6, 5, 4, 3, 2, 1]
         var element_ids = ['speed', 'pitch', 'roll', 'rpm_mag', 'rpm_opt', 'dist', 'bat_lvl']
@@ -551,7 +554,6 @@
         var data = event.data
         var byteArray = new Uint8Array(data)
         console.log(`[message] Данные получены с сервера: `, uint8ArrayToHexMap(byteArray), data);
-        console.log(SQN_LOOKUP)
         handle_response(byteArray)
       };
 
