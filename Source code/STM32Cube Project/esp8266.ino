@@ -12,24 +12,10 @@
 #define TELEM_SIZE 15
 #define MODULES_CNT 9
 
-#ifdef ARDUINO_ARCH_ESP8266
-  const int LED_PIN   = LED_BUILTIN;
-  #define LED_ON      LOW
-  #define LED_OFF     HIGH
-  const int SENSOR_PIN = A0;
-#else
-  const int LED_PIN   = 2;
-  #define LED_ON      HIGH
-  #define LED_OFF     LOW
-  const int SENSOR_PIN = 34;
-#endif
-
 static uint8_t telem [TELEM_SIZE] = {0};
 static uint8_t magic_versions [MODULES_CNT] = {0};
 
 static int8_t last_speed, last_angle;
-
-bool ledState = false;
 
 // Full packet
 #pragma pack(push, 1)
