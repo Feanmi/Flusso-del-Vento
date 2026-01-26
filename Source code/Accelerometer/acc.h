@@ -2,6 +2,14 @@
 #include "TJ_MPU6050.h"
 #include <math.h>
 
+#define SCALE_ACC_X       1.0
+#define SCALE_ACC_Y       1.0
+#define SCALE_ACC_Z       1.0
+#define CALIBRATE_SAMPLES 10
+#define INTEGRATE_SAMPLES 1000
+#define MAX_SPEED         10 // 10 m/s
+#define G_CONST           9.80665
+
 /* ====== External data ====== */
 extern float SPEED_MEASURED_ACC;
 extern uint8_t DATA_VALID_FLAG[2];
@@ -10,28 +18,18 @@ extern uint8_t DATA_VALID_FLAG[2];
 void init_gyroscope(I2C_HandleTypeDef *hi2c);
 void read_accelleration(void);
 
-#endif /* ACC_SENSOR_H */
-
-
-
-// Scaling factors (y = scale*x)
-#define SCALE_ACC_X 1.0
-#define SCALE_ACC_Y 1.0
-#define SCALE_ACC_Z 1.0
-
-#define CALIBRATE_SAMPLES 10
-
-// Structure for calibrated data
+/* ====== Private types ====== */
 typedef struct {
-    double offset_x;
-    double offset_y;
-    double offset_z;
-    double scale_x;
-    double scale_y;
-    double scale_z;
+    float offset_x;
+    float offset_y;
+    float offset_z;
+    float scale_x;
+    float scale_y;
+    float scale_z;
 } AccelCalibration_t;
 
-// Function prototypes
-void CalibrateAccelerometer(int samples);
-void GetCalibratedAccel(ScaledData_Def *raw, ScaledData_Def *calibrated);
-float LowPassFilter(float input, float previous, float alpha);
+/* ====== Private functions ====== */
+static void CalibrateAccelerometer(uint16_t samples);
+static void GetCalibratedAccel(ScaledData_Def *raw, ScaledData_Def *calibrated);
+static float LowPassFilter(float input, float previous, float alpha);
+int ConvertSpeed(float speed, int max_acc = MAX_ACC);

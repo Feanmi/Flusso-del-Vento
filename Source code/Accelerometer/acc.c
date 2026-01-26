@@ -1,150 +1,115 @@
-#include "acc.h"
-// Structure for accelerometer calibration data
+/* ====== Внутренние глобальные переменные ====== */
+static I2C_HandleTypeDef *mpu_i2c;
 
-I2C_HandleTypeDef hi2c1;
-RawData_Def myAccelRaw, myGyroRaw;
-ScaledData_Def myAccelScaled, myGyroScaled;
+static RawData_Def myAccelRaw;
+static ScaledData_Def myAccelScaled;
+static ScaledData_Def calibratedAccel;
 
-// Calibration structure
-AccelCalibration_t accelCalib = {0};
+static AccelCalibration_t accelCalib = {0};
 
-// Velocity calculation variables
-float velocity = 0.0f;
-float vel2 = 0.0f;
-float last_accel_x = 0.0f;
-long float av;
-uint32_t last_time = 0;
-uint8_t is_calibrated = 0;
+static uint8_t is_calibrated = 0;
+static float filtered_accel_x = 0;
 
-void SystemClock_Config(void);
-static void MX_GPIO_Init(void);
-static void MX_I2C1_Init(void);
+/* ====== Внешние глобальные переменные ====== */
+int16_t SPEED_MEASURED_ACC = 0;
+uint8_t DATA_VALID_FLAG[2] = {0};
 
-// Accelerometer calibration function (call when sensor is stationary)
-void CalibrateAccelerometer(int samples) {
-    float sum_x = 0, sum_y = 0, sum_z = 0;
-    ScaledData_Def accelRaw;
-    
-    // Collect samples for averaging
-    for(int i = 0; i < samples; i++) {
-        MPU6050_Get_Accel_Scale(&accelRaw);
-        sum_x += accelRaw.x;
-        sum_y += accelRaw.y;
-        sum_z += accelRaw.z;
+/* ====== Функция для инициализации акселерометра-гироскопа ====== */
+void init_gyroscope(I2C_HandleTypeDef *hi2c)
+{
+    MPU_ConfigTypeDef mpu_cfg;
+    mpu_i2c = hi2c;
+    MPU6050_Init(mpu_i2c);
+
+    mpu_cfg.Accel_Full_Scale = AFS_SEL_4g;
+    mpu_cfg.Gyro_Full_Scale  = FS_SEL_500;
+    mpu_cfg.ClockSource      = Internal_8MHz;
+    mpu_cfg.CONFIG_DLPF      = DLPF_184A_188G_Hz;
+    mpu_cfg.Sleep_Mode_Bit   = 0;
+
+    MPU6050_Config(&mpu_cfg);
+    HAL_Delay(100);
+    CalibrateAccelerometer(CALIBRATE_SAMPLES);
+    DATA_VALID_FLAG[2] = 0;
+}
+
+/* ====== Функция для обновления данных о текущей скорости ====== */
+void read_accelleration(void)
+{
+    DATA_VALID_FLAG[2] = 0
+    float sko;
+    float sum = 0;
+
+    MPU6050_Get_Accel_Scale(&myAccelScaled);
+
+    if (is_calibrated) {
+        GetCalibratedAccel(&myAccelScaled, &calibratedAccel);
+        filtered_accel_x = LowPassFilter(calibratedAccel.x,
+                                         filtered_accel_x, 0.1f);
+    } else {
+        filtered_accel_x = LowPassFilter(myAccelScaled.x,
+                                         filtered_accel_x, 0.1f);
+    }
+
+    /* Модуль ускорения */
+    sko = sqrtf(myAccelScaled.x * myAccelScaled.x +
+                myAccelScaled.y * myAccelScaled.y +
+                myAccelScaled.z * myAccelScaled.z);
+
+    /* Интегрирование ускорения -> скорость */
+    for (uint16_t i = 0; i < INTEGRATE_SAMPLES; i++) {
+        float acc = sko * G_CONST;
+        float dt  = 0.001f;
+        sum += acc * dt;
+
+        MPU6050_Get_Accel_Scale(&myAccelScaled);
+        HAL_Delay(1);
+    }
+
+    SPEED_MEASURED_ACC = ConvertSpeed(sum);
+    DATA_VALID_FLAG[2] = 1;
+}
+
+/* ====== Функция для начальной калибровки акселерометра ====== */
+static void CalibrateAccelerometer(uint16_t samples = CALIBRATE_SAMPLES)
+{
+    float sx = 0, sy = 0, sz = 0;
+    ScaledData_Def acc;
+
+    for (uint16_t i = 0; i < samples; i++) {
+        MPU6050_Get_Accel_Scale(&acc);
+        sx += acc.x;
+        sy += acc.y;
+        sz += acc.z;
         HAL_Delay(10);
     }
-    
-    // Calculate average offsets
-    // Assuming sensor is flat on table during calibration:
-    // Z-axis should read ~1g, X and Y ~0g
-    accelCalib.offset_x = sum_x / samples;
-    accelCalib.offset_y = sum_y / samples;
-    accelCalib.offset_z = (sum_z / samples) - 1.0f; // Subtract gravity
-    
-    // Scaling factors (can be calibrated more precisely if needed)
+
+    accelCalib.offset_x = sx / samples;
+    accelCalib.offset_y = sy / samples;
+    accelCalib.offset_z = (sz / samples) - 1.0f;
+
     accelCalib.scale_x = SCALE_ACC_X;
     accelCalib.scale_y = SCALE_ACC_Y;
     accelCalib.scale_z = SCALE_ACC_Z;
-    
+
     is_calibrated = 1;
 }
 
-// Get calibrated accelerometer data
-void GetCalibratedAccel(ScaledData_Def *raw, ScaledData_Def *calibrated) {
+/* ====== Функция для получения данных о текущей скорости с учётом калиброаки ====== */
+static void GetCalibratedAccel(ScaledData_Def *raw,
+                               ScaledData_Def *calibrated)
+{
     calibrated->x = (raw->x - accelCalib.offset_x) * accelCalib.scale_x;
     calibrated->y = (raw->y - accelCalib.offset_y) * accelCalib.scale_y;
     calibrated->z = (raw->z - accelCalib.offset_z) * accelCalib.scale_z;
 }
 
-// Simple low-pass filter for noise reduction
-float LowPassFilter(float input, float previous, float alpha) {
-    return alpha * input + (1.0f - alpha) * previous;
+/* ====== Функция для перевода скорости в диапазон [-MAX_SPEED; MAX_SPEED] ====== */
+int ConvertSpeed(float speed, int max_acc = MAX_ACC){
+    return speed / max_acc * 255;
 }
 
-
-int main_acc() {
-
-    double velocity = 0;
-    double last_accel_x = 0;
-    uint32_t last_time = 0;
-    uint32_t reset_counter = 0;
-    
-    HAL_Init();
-
-  SystemClock_Config();
-
-
-
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_I2C1_Init();
-  /* USER CODE BEGIN 2 */
-    MPU6050_Init(&hi2c1);
-    
-    // Initialize timing
-    last_time = HAL_GetTick();
-  /* USER CODE END 2 */
-    
-    myMpuConfig.Accel_Full_Scale = AFS_SEL_4g;
-    myMpuConfig.ClockSource = Internal_8MHz;
-    myMpuConfig.CONFIG_DLPF = DLPF_184A_188G_Hz;
-    myMpuConfig.Gyro_Full_Scale = FS_SEL_500;
-    myMpuConfig.Sleep_Mode_Bit = 0;
-    MPU6050_Config(&myMpuConfig);
-    
-    // Wait for MPU6050 to stabilize
-    HAL_Delay(100);
-    
-    // Perform calibration (sensor must be stationary!)
-    CalibrateAccelerometer(CALIBRATE_SAMPLES);
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-    while(1) {
-        MPU6050_t rawAccel, calibratedAccel;
-
-            MPU6050_Get_Accel_Scale(&myAccelScaled);
-        //MPU6050_Get_Gyro_Scale(&myGyroScaled);
-        
-		
-		sko = sqrt(pow(myAccelScaled.x,2)+pow(myAccelScaled.y,2)+pow(myAccelScaled.z,2));
-        // Apply calibration if available
-        if(is_calibrated) {
-            GetCalibratedAccel(&myAccelScaled, &calibratedAccel);
-            
-            // Remove gravity component (assuming Z-axis points upward)
-            calibratedAccel.z -= 1.0f;
-            
-            // Filter accelerometer data to reduce noise
-            filtered_accel_x = LowPassFilter(calibratedAccel.x, filtered_accel_x, 0.1f);
-        } else {
-            // Use raw data if not calibrated
-            filtered_accel_x = LowPassFilter(myAccelScaled.x, filtered_accel_x, 0.1f);
-        }
-        
-        // Calculate time delta since last measurement
-        //uint32_t current_time = HAL_GetTick();
-        //float dt = (current_time - last_time) / 1000.0f; // Convert to seconds
-        //last_time = current_time;
-        
-        
-        av = sqrt(pow(myAccelScaled.x,2)+pow(myAccelScaled.y,2)+pow(myAccelScaled.z,2));
-				
-			float sum=0;
-			for (int i=0; i<1000; i=i+1){
-							
-				float dy =(av-1000) * 0.00980665f;
-				float dt=0.001;
-				sum += dy * dt;
-				MPU6050_Get_Accel_Scale(&myAccelScaled);
-				HAL_Delay(1);
-			}
-		vel2 = sum;
-
-        
-        // TODO:
-        // отсюда можно вывести скорость на экранчик
-        
-        HAL_Delay(10);
-    }
+static float LowPassFilter(float input, float previous, float alpha)
+{
+    return alpha * input + (1.0f - alpha) * previous;
 }
