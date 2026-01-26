@@ -209,12 +209,6 @@ int main(void)
             filtered_accel_x = LowPassFilter(myAccelScaled.x, filtered_accel_x, 0.1f);
         }
         
-        // Calculate time delta since last measurement
-        //uint32_t current_time = HAL_GetTick();
-        //float dt = (current_time - last_time) / 1000.0f; // Convert to seconds
-        //last_time = current_time;
-        
-        
         sko = sqrt(pow(myAccelScaled.x,2)+pow(myAccelScaled.y,2)+pow(myAccelScaled.z,2));
 				
 						float sum=0;
