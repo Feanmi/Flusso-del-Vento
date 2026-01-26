@@ -27,5 +27,4 @@ void read_accelleration(void);
 /* ====== Внутренние функции ====== */
 static void CalibrateAccelerometer(uint16_t samples);
 static void GetCalibratedAccel(ScaledData_Def *raw, ScaledData_Def *calibrated);
-static float LowPassFilter(float input, float previous, float alpha);
 int ConvertSpeed(float speed, int max_acc = MAX_ACC);
