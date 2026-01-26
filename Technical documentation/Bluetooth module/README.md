@@ -27,69 +27,9 @@
 ## Конечный автомат приёма:
 <img width="3696" height="544" alt="Bluetooth fsm" src="https://github.com/user-attachments/assets/73ad6323-b862-477a-8d31-eb91fa1cc58e" />
 
-Работа приёмника и передатчика соответствуепт протоколу управления. Данные представленны в виде структуры, для приема и отправки данных созданны специальные функции:
+Работа приёмника и передатчика соответствуепт протоколу управления. 
 
-**protocol_init** - функция для инициализации протокола
+## Serial Bluetooth Terminal
 
-**protocol_process_byte** - функция для обработки входящего байта
-
-**protocol_create_response** - функция для создания ответа
-
-**protocol_send_response** - функция для отправки ответа
-
-**protocol_process_command** - функция для обработки команд
-
-**protocol_check_crc** - функция проверки crc
-
-**calculate_crc8** - функция расчёта crc
-## Пример использования:
-
-Для использования программы, необходимо подключить модуль к свободному UART на плате, настроив его так, как описано выше. В примере используется UART2. 
-
-```c
-//main.c
-//PROTOCOL INIT
-#include "bluetooth_protocol.h"
-
-protocol_handler_t protocol_handler;
-
-
-//MAIN FUNCTION
-int main(void)
-{
-    protocol_init(&protocol_handler, &huart2);
-    
-    // Enable receive interrupt
-    uint8_t rx_byte;
-    HAL_UART_Receive_IT(&huart2, &rx_byte, 1);
-    
-    // Start timer
-    HAL_TIM_Base_Start_IT(&htim2);
-    while (1)
-  {
-    if (protocol_handler.packet_ready) {
-			protocol_process_command(&protocol_handler);
-    }
-  }
-}
-
-
-//UART CALLBACK
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-    if (huart->Instance == USART2) {
-        uint8_t received_byte = huart->Instance->DR;
-        
-        // Process byte
-        protocol_process_byte(&protocol_handler, received_byte);
-        
-        // Reset timeout timer
-        __HAL_TIM_SET_COUNTER(&htim2, 0);
-        HAL_TIM_Base_Start(&htim2);
-        
-        // Restart reception
-        HAL_UART_Receive_IT(&huart2, &received_byte, 1);
-    }
-}
-```
-Структура protocol_handler хранит в себе состояние конечного автомата bluetooth, готовность принимаемого пакета, а также принимаемые и отправляемые данные
+Для общения с модулем можно использовать удобное приложение на Android - Serial Bluetooth Terminal
+<img width="256" height="256" alt="serial" src="https://github.com/user-attachments/assets/2396e0f1-3446-42cb-ade9-233855c674d3" />
