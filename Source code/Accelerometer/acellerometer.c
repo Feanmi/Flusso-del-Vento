@@ -44,11 +44,6 @@ void read_accelleration(void)
 
     if (is_calibrated) {
         GetCalibratedAccel(&myAccelScaled, &calibratedAccel);
-        filtered_accel_x = LowPassFilter(calibratedAccel.x,
-                                         filtered_accel_x, 0.1f);
-    } else {
-        filtered_accel_x = LowPassFilter(myAccelScaled.x,
-                                         filtered_accel_x, 0.1f);
     }
 
     /* Модуль ускорения */
@@ -107,9 +102,4 @@ static void GetCalibratedAccel(ScaledData_Def *raw,
 /* ====== Функция для перевода скорости в диапазон [-MAX_SPEED; MAX_SPEED] ====== */
 int ConvertSpeed(float speed, int max_acc = MAX_ACC){
     return speed / max_acc * 255;
-}
-
-static float LowPassFilter(float input, float previous, float alpha)
-{
-    return alpha * input + (1.0f - alpha) * previous;
 }
