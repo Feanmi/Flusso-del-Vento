@@ -1,4 +1,4 @@
-# Bluetooth
+# Описание программы Bluetooth для STM32
 
 <img width="300" height="400" alt="Bluetooth fsm" src="https://github.com/user-attachments/assets/15ce6d5c-9ac5-4f97-b2b5-18e5b6c065c5" />
 
@@ -36,16 +36,15 @@
 ## Пример использования:
 
 ```c
+//PROTOCOL INIT
 #include "bluetooth_protocol.h"
 
 protocol_handler_t protocol_handler;
 
-//UART2 INIT
 
-//YOUR CODE
+//MAIN FUNCTION
 int main(void)
 {
-  //YOUR CODE
     protocol_init(&protocol_handler, &huart2);
     
     // Enable receive interrupt
@@ -61,7 +60,9 @@ int main(void)
     }
   }
 }
-//YOUR CODE
+
+
+//UART CALLBACK
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == USART2) {
@@ -78,4 +79,5 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
         HAL_UART_Receive_IT(&huart2, &received_byte, 1);
     }
 }
-//YOUR CODE
+```
+Структура protocol_handler хранит в себе состояние конечного автомата bluetooth, готовность принимаемого пакета, а также принимаемые и отправляемые данные
