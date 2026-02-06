@@ -15,6 +15,14 @@ void init_motor(){
 
 void perform_motor_control_step(){
           	  pwm_val = SPEED_DESIRED;
+
+          	  if (pwm_val > 80){
+          		  pwm_val = 80;
+          	  }
+          	  if (pwm_val < -80){
+          	      pwm_val = -80;
+          	 }
+
           	  pwm_val1 = pwm_val;
           	  if (pwm_val  > 0){
           		  pwm_val2 = pwm_val;
@@ -23,43 +31,54 @@ void perform_motor_control_step(){
           	      pwm_val2 = pwm_val / (-1);
           	  }
           	  if (pwm_val1 > 3) {
-          		  if (abs(abs(pwm_val2) - abs(past_pwm_val2)) > 20){
-          		      HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
-          			  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
-          			  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_SET);
+          		  if (((pwm_val2) - (past_pwm_val2)) > 20){
+          		      HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+          			  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
           			  htim4.Instance-> CCR1 = past_pwm_val2 +1;
           			  past_pwm_val2 = past_pwm_val2 +1;
           		  }
+
           		  else {
-					  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
-					  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
-					  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_SET);
-					  htim4.Instance-> CCR1 = pwm_val2;
-					  past_pwm_val2 = pwm_val2;
+          			  	  if (pwm_val2 < past_pwm_val2){
+          			          			htim4.Instance-> CCR1 = pwm_val2;
+          			          			past_pwm_val2 = pwm_val2;
+          			          		  }
+          			  	  else {
+          			  		  	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+          			  		  	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+          			  		  	  htim4.Instance-> CCR1 = pwm_val2;
+          			  		  	  past_pwm_val2 = pwm_val2;
+          			  	  }
           		  }
           	  }
 
           	  if (pwm_val1 < 3) {
-          		 if (abs(abs(pwm_val2) - abs(past_pwm_val2)) > 20){
-          			 HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
-          			 HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);
-          			 HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET);
+          		 if (abs((pwm_val2) - (past_pwm_val2)) > 20){
+          			 HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+          			 HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
           			 htim4.Instance-> CCR1 = past_pwm_val2 +1;
           			 past_pwm_val2 = past_pwm_val2 +1;
           		 }
-          		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_SET);
-          		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);
-          		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET);
-          		  htim4.Instance-> CCR1 = pwm_val2;
-          		  past_pwm_val2 = pwm_val2;
+          		 else {
+          			if (pwm_val2 < past_pwm_val2){
+          			         htim4.Instance-> CCR1 = pwm_val2;
+          			         past_pwm_val2 = pwm_val2;
+          			}
+          			 else {
+
+          			 HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+          		  	 HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+          		  	 htim4.Instance-> CCR1 = pwm_val2;
+          		  	 past_pwm_val2 = pwm_val2;
+          			 }
+          		 }
           	  }
 
           	  if (pwm_val1 > -3 && pwm_val1 < 3) {
-          		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
-          		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
-          		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, GPIO_PIN_RESET);
+          		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+          		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
           		  htim4.Instance-> CCR1 = pwm_val2;
-          		  past_pwm_val2 = pwm_val2;
+          		  past_pwm_val2 = 0;
           	  }
-          	  HAL_Delay(1);
+          	  HAL_Delay(50);
 }
